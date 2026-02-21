@@ -11,6 +11,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 export default function Login() {
   const router = useRouter();
+
   const handleLogin = async () => {
     // 환경에 맞는 redirectUri 생성
     const redirectTo = makeRedirectUri({
@@ -27,12 +28,10 @@ export default function Login() {
         },
       },
     });
-    console.log(data, error);
 
     if (error) {
       console.error("로그인 실패:", error);
     } else if (data?.url) {
-      console.log("로그인 URL:", data.url);
       const result = await WebBrowser.openAuthSessionAsync(
         data.url,
         redirectTo,
@@ -47,15 +46,15 @@ export default function Login() {
         const refresh_token = params.get("refresh_token");
 
         if (access_token && refresh_token) {
-          const { data: sessionData, error } = await supabase.auth.setSession({
+          const { error } = await supabase.auth.setSession({
             access_token,
             refresh_token,
           });
 
-          if (!error && sessionData.session) {
-            router.replace("/journeys");
-          } else {
+          if (error) {
             console.log("setSession 실패:", error);
+          } else {
+            router.replace("/");
           }
         } else {
           console.log("토큰이 없음. url=", result.url);

@@ -1,6 +1,6 @@
-import { View, Image, Text, type ImageSourcePropType } from 'react-native';
+import { Image, Text, View, type ImageSourcePropType } from "react-native";
 
-type AvatarSize = 'sm' | 'md' | 'lg' | 'xl';
+type AvatarSize = "sm" | "md" | "lg" | "xl";
 
 export type AvatarProps = {
   source?: ImageSourcePropType | { uri: string };
@@ -10,29 +10,34 @@ export type AvatarProps = {
 };
 
 const sizeClasses: Record<AvatarSize, string> = {
-  sm: 'w-8 h-8',
-  md: 'w-12 h-12',
-  lg: 'w-16 h-16',
-  xl: 'w-32 h-32',
+  sm: "w-8 h-8",
+  md: "w-12 h-12",
+  lg: "w-16 h-16",
+  xl: "w-32 h-32",
 };
 
 const fallbackTextClasses: Record<AvatarSize, string> = {
-  sm: 'text-caption',
-  md: 'text-body-sm',
-  lg: 'text-body',
-  xl: 'text-h2',
+  sm: "text-caption",
+  md: "text-body-sm",
+  lg: "text-body",
+  xl: "text-h2",
 };
 
 function getInitials(name: string): string {
   return name
     .split(/\s+/)
     .map((s) => s[0])
-    .join('')
+    .join("")
     .toUpperCase()
     .slice(0, 2);
 }
 
-export function Avatar({ source, fallback = '?', size = 'md', className = '' }: AvatarProps) {
+export function Avatar({
+  source,
+  fallback = "?",
+  size = "md",
+  className = "",
+}: AvatarProps) {
   const sizeClass = sizeClasses[size];
   const textClass = fallbackTextClasses[size];
 
@@ -42,12 +47,14 @@ export function Avatar({ source, fallback = '?', size = 'md', className = '' }: 
     >
       {source ? (
         <Image
-          source={typeof source === 'object' && 'uri' in source ? source : (source as any)}
-          className="w-full h-full"
+          source={source ? { uri: source as string } : source}
+          className={`${sizeClass}`}
           resizeMode="cover"
         />
       ) : (
-        <Text className={`font-bold text-ink/60 ${textClass}`}>{getInitials(fallback)}</Text>
+        <Text className={`font-bold text-ink/60 ${textClass}`}>
+          {getInitials(fallback)}
+        </Text>
       )}
     </View>
   );

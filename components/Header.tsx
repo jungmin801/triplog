@@ -1,3 +1,4 @@
+import useMember from "@/hooks/useMember";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Image, Pressable, Text, View } from "react-native";
@@ -31,6 +32,7 @@ export function Header({
   rightSlot,
   padded = true,
 }: HeaderProps) {
+  const { member } = useMember();
   return (
     <View
       className={[
@@ -78,7 +80,11 @@ export function Header({
         {rightSlot ? (
           rightSlot
         ) : showAvatar ? (
-          <Avatar size="sm" fallback="Kathryn" />
+          <Avatar
+            source={member?.avatar_url}
+            size="sm"
+            fallback={member?.display_name ?? "회원님"}
+          />
         ) : null}
       </View>
     </View>

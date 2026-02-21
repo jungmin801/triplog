@@ -1,6 +1,8 @@
 import Header from "@/components/Header";
 import useCardSize from "@/hooks/useCardSize";
+import { supabase } from "@/lib/supabase";
 import { type Href, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Avatar, Card, Navigation, NavTab, Tag } from "../../components";
@@ -8,6 +10,7 @@ import "../../global.css";
 
 export default function JourneysHome() {
   const router = useRouter();
+  const [journeys, setJourneys] = useState<[]>([]);
 
   const tabs: NavTab[] = [
     {
@@ -41,6 +44,23 @@ export default function JourneysHome() {
   };
 
   const { cardWidth } = useCardSize();
+
+  const fetchJourneys = async () => {
+    const { data, error } = await supabase
+      .from("journeys")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching journeys:", error);
+      return;
+    }
+    setJourneys(data);
+  };
+
+  useEffect(() => {
+    fetchJourneys();
+  }, []);
 
   return (
     <View className="flex-1 bg-surface">

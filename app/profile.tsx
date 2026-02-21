@@ -1,5 +1,6 @@
 import { Avatar, Button, Navigation, NavTab } from "@/components";
 import Header from "@/components/Header";
+import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { type Href, useRouter } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -43,17 +44,32 @@ export default function Profile() {
 
   const tabs: NavTab[] = [
     { key: "journeys", label: "Home", icon: "home-outline", href: "/journeys" },
-    { key: "new", label: "Journeys", icon: "add-outline", href: "/journeys/new" },
+    {
+      key: "new",
+      label: "Journeys",
+      icon: "add-outline",
+      href: "/journeys/new",
+    },
     {
       key: "search",
       label: "Search",
       icon: "search-outline",
       href: "/(tabs)/search" as Href,
     },
-    { key: "profile", label: "Profile", icon: "person-outline", href: "/profile" },
+    {
+      key: "profile",
+      label: "Profile",
+      icon: "person-outline",
+      href: "/profile",
+    },
   ];
 
   const onTabPress = (href: Href) => router.push(href);
+
+  const onLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
 
   return (
     <View className="flex-1 bg-surface">
@@ -144,7 +160,7 @@ export default function Profile() {
             <Button
               variant="secondary"
               size="lg"
-              onPress={() => router.replace("/login")}
+              onPress={onLogout}
               className="w-full mt-6"
             >
               Logout
