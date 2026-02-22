@@ -1,9 +1,11 @@
 import { Button, Card } from "@/components";
 import Header from "@/components/Header";
 import useCardSize from "@/hooks/useCardSize";
+import { shareInvite } from "@/lib/shareInvite";
+import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ScrollView,
   Text,
@@ -52,9 +54,10 @@ const MOCK_FOLDERS: Record<string, { title: string; dateRange: string }> = {
 export default function JourneyDetailsRoute() {
   const router = useRouter();
   const { id = "default" } = useLocalSearchParams<{ id: string }>();
+  console.log("id", id);
   const { cardWidth, cardGap, horizontalPadding } = useCardSize();
   const scrollRef = useRef<ScrollView>(null);
-
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const folder = MOCK_FOLDERS[id] ?? MOCK_FOLDERS.default;
 
@@ -65,6 +68,27 @@ export default function JourneyDetailsRoute() {
     const index = Math.round(offsetX / snapInterval);
     setActiveIndex(Math.min(Math.max(0, index), MOCK_ENTRIES.length - 1));
   };
+
+  const findInviteCode = async () => {
+    const { data, error } = await supabase
+      .from("journeys")
+      .select("invite_code")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      console.error("Error finding invite code:", error);
+      return;
+    }
+
+    console.log("data", data);
+
+    setInviteCode(data?.invite_code ?? null);
+  };
+
+  useEffect(() => {
+    findInviteCode();
+  }, []);
 
   return (
     <View className="flex-1 bg-surface">
@@ -157,7 +181,7 @@ export default function JourneyDetailsRoute() {
         </View>
 
         {/* Add Memory button */}
-        <View className="px-space-card pb-4 flex-row justify-between">
+        <View className="px-space-card pb-8 flex-row justify-between">
           <Button
             variant="soft"
             size="sm"
@@ -168,14 +192,24 @@ export default function JourneyDetailsRoute() {
               Add Memory
             </Text>
           </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            className="rounded-pill"
-            onPress={() => {}}
-          >
-            <Ionicons name="map-outline" size={18} color="#f8f8f8" />
-          </Button>
+          <View className="flex-row items-center gap-2">
+            <Button
+              variant="soft"
+              size="sm"
+              className="rounded-pill"
+              onPress={() => shareInvite(inviteCode ?? "")}
+            >
+              <Ionicons name="share-outline" size={18} color="#ee845d" />
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              className="rounded-pill"
+              onPress={() => {}}
+            >
+              <Ionicons name="map-outline" size={18} color="#f8f8f8" />
+            </Button>
+          </View>
         </View>
       </SafeAreaView>
     </View>

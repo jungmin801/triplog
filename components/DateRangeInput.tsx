@@ -54,35 +54,36 @@ export function DateRangeInput({
   value,
   onChange,
 }: {
-  value: DateRange;
+  value?: DateRange | null;
   onChange: (next: DateRange) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const safeValue: DateRange = value ?? { start: undefined, end: undefined };
 
-  const dateLabel = useMemo(() => formatLabel(value), [value]);
-  const markedDates = useMemo(() => buildMarkedDates(value), [value]);
+  const dateLabel = useMemo(() => formatLabel(safeValue), [safeValue]);
+  const markedDates = useMemo(() => buildMarkedDates(safeValue), [safeValue]);
 
   const onDayPress = (day: { dateString: string }) => {
     const d = day.dateString; // YYYY-MM-DD
 
     // 아무것도 없거나, start+end가 이미 있으면 새로 시작
-    if (!value.start || (value.start && value.end)) {
+    if (!safeValue.start || (safeValue.start && safeValue.end)) {
       onChange({ start: d, end: undefined });
       return;
     }
 
     // start만 있는 상태에서 end 선택
-    if (value.start && !value.end) {
+    if (safeValue.start && !safeValue.end) {
       // end가 start보다 이전이면 swap
-      if (d < value.start) onChange({ start: d, end: value.start });
-      else onChange({ start: value.start, end: d });
+      if (d < safeValue.start) onChange({ start: d, end: safeValue.start });
+      else onChange({ start: safeValue.start, end: d });
     }
   };
 
   return (
     <>
       {/* Trigger */}
-      <Pressable className="mb-5" onPress={() => setOpen(true)}>
+      <Pressable onPress={() => setOpen(true)}>
         <Text className="text-overline font-bold text-ink/40 mb-1.5">
           DATE RANGE
         </Text>
@@ -134,7 +135,7 @@ export function DateRangeInput({
               <Pressable
                 className="flex-1 h-11 rounded-input bg-primary items-center justify-center"
                 onPress={() => setOpen(false)}
-                disabled={!value.start}
+                disabled={!safeValue.start}
               >
                 <Text className="text-white font-semibold">Done</Text>
               </Pressable>

@@ -1,3 +1,4 @@
+import { COUNTRIES } from "@/constants/countries";
 import { Ionicons } from "@expo/vector-icons";
 import { useMemo, useState } from "react";
 import {
@@ -9,140 +10,11 @@ import {
   View,
 } from "react-native";
 
-const COUNTRIES = [
-  "Afghanistan",
-  "Albania",
-  "Algeria",
-  "Andorra",
-  "Angola",
-  "Argentina",
-  "Armenia",
-  "Australia",
-  "Austria",
-  "Azerbaijan",
-  "Bahrain",
-  "Bangladesh",
-  "Belarus",
-  "Belgium",
-  "Belize",
-  "Benin",
-  "Bhutan",
-  "Bolivia",
-  "Bosnia and Herzegovina",
-  "Botswana",
-  "Brazil",
-  "Brunei",
-  "Bulgaria",
-  "Burkina Faso",
-  "Cambodia",
-  "Cameroon",
-  "Canada",
-  "Chile",
-  "China",
-  "Colombia",
-  "Costa Rica",
-  "Croatia",
-  "Cuba",
-  "Cyprus",
-  "Czech Republic",
-  "Denmark",
-  "Ecuador",
-  "Egypt",
-  "Estonia",
-  "Ethiopia",
-  "Finland",
-  "France",
-  "Georgia",
-  "Germany",
-  "Ghana",
-  "Greece",
-  "Guatemala",
-  "Hungary",
-  "Iceland",
-  "India",
-  "Indonesia",
-  "Iran",
-  "Iraq",
-  "Ireland",
-  "Israel",
-  "Italy",
-  "Japan",
-  "Jordan",
-  "Kazakhstan",
-  "Kenya",
-  "Kuwait",
-  "Kyrgyzstan",
-  "Laos",
-  "Latvia",
-  "Lebanon",
-  "Libya",
-  "Lithuania",
-  "Luxembourg",
-  "Malaysia",
-  "Maldives",
-  "Malta",
-  "Mexico",
-  "Mongolia",
-  "Montenegro",
-  "Morocco",
-  "Myanmar",
-  "Nepal",
-  "Netherlands",
-  "New Zealand",
-  "Nigeria",
-  "North Macedonia",
-  "Norway",
-  "Oman",
-  "Pakistan",
-  "Palestine",
-  "Panama",
-  "Paraguay",
-  "Peru",
-  "Philippines",
-  "Poland",
-  "Portugal",
-  "Qatar",
-  "Romania",
-  "Russia",
-  "Rwanda",
-  "Saudi Arabia",
-  "Senegal",
-  "Serbia",
-  "Singapore",
-  "Slovakia",
-  "Slovenia",
-  "South Africa",
-  "South Korea",
-  "Spain",
-  "Sri Lanka",
-  "Sudan",
-  "Sweden",
-  "Switzerland",
-  "Syria",
-  "Taiwan",
-  "Tajikistan",
-  "Tanzania",
-  "Thailand",
-  "Tunisia",
-  "Turkey",
-  "Turkmenistan",
-  "Ukraine",
-  "United Arab Emirates",
-  "United Kingdom",
-  "United States",
-  "Uruguay",
-  "Uzbekistan",
-  "Venezuela",
-  "Vietnam",
-  "Yemen",
-  "Zambia",
-  "Zimbabwe",
-].sort((a, b) => a.localeCompare(b));
-
+/** value/onChange는 국가 코드(code) 기준. 백엔드에는 code 전달. */
 export type CountrySelectProps = {
   label?: string;
   value: string | null;
-  onChange: (country: string | null) => void;
+  onChange: (countryCode: string | null) => void;
   placeholder?: string;
   containerClassName?: string;
 };
@@ -160,11 +32,19 @@ export function CountrySelect({
   const filtered = useMemo(() => {
     if (!query.trim()) return COUNTRIES;
     const q = query.trim().toLowerCase();
-    return COUNTRIES.filter((c) => c.toLowerCase().includes(q));
+    return COUNTRIES.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q),
+    );
   }, [query]);
 
-  const onSelect = (country: string) => {
-    onChange(country);
+  const displayValue = useMemo(() => {
+    if (!value) return null;
+    return COUNTRIES.find((c) => c.code === value)?.name ?? value;
+  }, [value]);
+
+  const onSelect = (code: string) => {
+    onChange(code);
     setOpen(false);
     setQuery("");
   };
@@ -177,10 +57,7 @@ export function CountrySelect({
 
   return (
     <>
-      <Pressable
-        className={containerClassName}
-        onPress={() => setOpen(true)}
-      >
+      <Pressable className={containerClassName} onPress={() => setOpen(true)}>
         {label ? (
           <Text className="text-overline font-bold text-ink/40 mb-1.5">
             {label}
@@ -192,7 +69,7 @@ export function CountrySelect({
             className={`text-body ml-3 flex-1 ${value ? "text-ink" : "text-ink/60"}`}
             numberOfLines={1}
           >
-            {value ?? placeholder}
+            {displayValue ?? placeholder}
           </Text>
           <Ionicons name="chevron-down" size={18} color="#8e8881" />
         </View>
@@ -231,7 +108,7 @@ export function CountrySelect({
             </View>
             <FlatList
               data={filtered}
-              keyExtractor={(item) => item}
+              keyExtractor={(item) => item.code}
               keyboardShouldPersistTaps="handled"
               className="max-h-80"
               ListEmptyComponent={
@@ -242,13 +119,17 @@ export function CountrySelect({
               renderItem={({ item }) => (
                 <Pressable
                   className="px-4 py-3.5 border-b border-ink/5 active:bg-ink/5 flex-row items-center justify-between"
-                  onPress={() => onSelect(item)}
+                  onPress={() => onSelect(item.code)}
                 >
                   <Text className="text-body text-ink" numberOfLines={1}>
-                    {item}
+                    {item.name}
                   </Text>
-                  {value === item ? (
-                    <Ionicons name="checkmark-circle" size={20} color="#ee845d" />
+                  {value === item.code ? (
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={20}
+                      color="#ee845d"
+                    />
                   ) : null}
                 </Pressable>
               )}

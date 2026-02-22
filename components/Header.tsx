@@ -47,7 +47,7 @@ export function Header({
             className="w-8 h-8 rounded-pill overflow-hidden bg-surface-alt border border-ink/5 items-center justify-center p-2"
             hitSlop={8}
           >
-            <Ionicons name="chevron-back" size={18} color="#6B7280" />
+            <Ionicons name="chevron-back" size={12} color="#6B7280" />
           </Pressable>
         ) : null}
       </View>
