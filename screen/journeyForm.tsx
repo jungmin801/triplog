@@ -2,17 +2,19 @@ import { Button, Input } from "@/components";
 import { CountrySelect } from "@/components/CountrySelect";
 import { DateRangeInput } from "@/components/DateRangeInput";
 import Header from "@/components/Header";
+import { PhotoPickerField } from "@/components/PhotoPickerField";
 import useMember from "@/hooks/useMember";
-import { pickImage } from "@/lib/imagePicker";
+import { journeyQueryKeys } from "@/lib/journeyQueries";
 import { supabase } from "@/lib/supabase";
+import { uploadImageToSupabase } from "@/lib/uploadImage";
 import { useAuth } from "@/provider/authProvider";
-import { Ionicons } from "@expo/vector-icons";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ImagePickerAsset } from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Controller, Resolver, useForm } from "react-hook-form";
-import { Image, Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { z } from "zod";
 import "../global.css";
@@ -32,41 +34,46 @@ const schema = z.object({
   country: z.string().min(1, "Country is required"),
 });
 
-export async function uploadImageToSupabase({
-  bucket,
-  uri,
-  path,
-  mimeType,
-}: {
-  bucket: string;
-  uri: string;
-  path: string;
-  mimeType?: string | null;
-}) {
-  const res = await fetch(uri);
-  if (!res.ok) throw new Error(`Failed to read file: ${res.status}`);
+async function createJourneyWithThumbnail(
+  data: FormValues,
+  image: ImagePickerAsset | null,
+): Promise<string> {
+  const { data: journeyId, error: insertErr } = await supabase.rpc(
+    "create_journey",
+    {
+      p_title: data.journeyTitle,
+      p_start_date: data.dateRange.start,
+      p_end_date: data.dateRange.end,
+      p_country_code: data.country,
+    },
+  );
 
-  const arrayBuffer = await res.arrayBuffer();
+  if (insertErr) throw insertErr;
+  if (!journeyId) throw new Error("No journey id returned");
 
-  if (arrayBuffer.byteLength === 0) {
-    throw new Error("Invalid image buffer (0 bytes).");
+  if (!image) return journeyId;
+
+  const imagePath = await uploadImageToSupabase({
+    bucket: "media",
+    uri: image.uri,
+    path: `journeys/${journeyId}/thumbnail.jpg`,
+    mimeType: image.mimeType,
+  });
+
+  if (imagePath) {
+    const { error: updateErr } = await supabase
+      .from("journeys")
+      .update({ thumbnail_url: imagePath })
+      .eq("id", journeyId);
+    if (updateErr) console.error("Error updating journey:", updateErr);
   }
 
-  const contentType = mimeType ?? "image/jpeg";
-
-  const { data, error } = await supabase.storage
-    .from(bucket)
-    .upload(path, arrayBuffer, {
-      contentType,
-      upsert: true,
-    });
-
-  if (error) throw error;
-  return data.path;
+  return journeyId;
 }
 
 export default function JourneyForm() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { session } = useAuth();
   const { member } = useMember();
   const { control, handleSubmit } = useForm<FormValues>({
@@ -79,52 +86,18 @@ export default function JourneyForm() {
   });
   const [image, setImage] = useState<ImagePickerAsset | null>(null);
 
-  const onSubmit = async (data: FormValues) => {
-    const userId = session?.user?.id;
-    if (!userId) return;
+  const createMutation = useMutation({
+    mutationFn: ({ data, image }: { data: FormValues; image: ImagePickerAsset | null }) =>
+      createJourneyWithThumbnail(data, image),
+    onSuccess: (journeyId) => {
+      queryClient.invalidateQueries({ queryKey: journeyQueryKeys.list() });
+      queryClient.invalidateQueries({ queryKey: journeyQueryKeys.detail(journeyId) });
+      router.push(`/journeys/${journeyId}`);
+    },
+  });
 
-    const { data: journey, error: insertErr } = await supabase
-      .from("journeys")
-      .insert({
-        owner_id: userId,
-        title: data.journeyTitle,
-        start_date: data.dateRange.start,
-        end_date: data.dateRange.end,
-        country_code: data.country,
-      })
-      .select("id")
-      .single();
-
-    if (insertErr) {
-      console.log("insertErr", insertErr);
-      return;
-    }
-
-    if (!image) {
-      router.push(`/journeys/${journey.id}`);
-      return;
-    }
-
-    const imagePath = await uploadImageToSupabase({
-      bucket: "media",
-      uri: image.uri,
-      path: `journeys/${journey.id}/thumbnail.jpg`,
-      mimeType: image.mimeType,
-    });
-
-    if (imagePath) {
-      const { error: updateErr } = await supabase
-        .from("journeys")
-        .update({ thumbnail_path: imagePath })
-        .eq("id", journey.id);
-
-      if (updateErr) {
-        console.error("Error updating journey:", updateErr);
-        return;
-      }
-    }
-
-    router.push(`/journeys/${journey.id}`);
+  const onSubmit = (data: FormValues) => {
+    createMutation.mutate({ data, image });
   };
 
   return (
@@ -177,69 +150,7 @@ export default function JourneyForm() {
                   <CountrySelect value={value} onChange={onChange} />
                 )}
               />
-              {/* Photo: empty state vs preview + change/remove */}
-              <View className="mb-8">
-                <Text className="text-overline font-bold text-ink/40 mb-1.5">
-                  PHOTO
-                </Text>
-                {!image ? (
-                  <Pressable
-                    className="rounded-card border-2 border-dashed bg-surface-alt items-center justify-center h-40 active:opacity-70"
-                    style={{ borderColor: "rgba(26, 31, 43, 0.2)" }}
-                    onPress={async () => {
-                      const result = await pickImage();
-                      if (result) setImage(result);
-                    }}
-                  >
-                    <Ionicons name="image-outline" size={40} color="#9ca3af" />
-                    <Text className="text-body-sm text-ink/50 mt-2">
-                      Add photo
-                    </Text>
-                  </Pressable>
-                ) : (
-                  <View className="rounded-card overflow-hidden bg-surface-alt">
-                    <View style={{ width: "100%", height: 200 }}>
-                      <Image
-                        source={{ uri: image.uri }}
-                        style={{ width: "100%", height: "100%" }}
-                        resizeMode="cover"
-                      />
-                    </View>
-                    <View className="flex-row border-t border-ink/10">
-                      <Pressable
-                        className="flex-1 py-3 flex-row items-center justify-center gap-2 active:bg-ink/5"
-                        onPress={async () => {
-                          const result = await pickImage();
-                          if (result) setImage(result);
-                        }}
-                      >
-                        <Ionicons
-                          name="images-outline"
-                          size={18}
-                          color="#6B7280"
-                        />
-                        <Text className="text-body-sm font-medium text-ink/70">
-                          Change photo
-                        </Text>
-                      </Pressable>
-                      <View className="w-px bg-ink/10" />
-                      <Pressable
-                        className="flex-1 py-3 flex-row items-center justify-center gap-2 active:bg-ink/5"
-                        onPress={() => setImage(null)}
-                      >
-                        <Ionicons
-                          name="trash-outline"
-                          size={18}
-                          color="#6B7280"
-                        />
-                        <Text className="text-body-sm font-medium text-ink/70">
-                          Remove
-                        </Text>
-                      </Pressable>
-                    </View>
-                  </View>
-                )}
-              </View>
+              <PhotoPickerField value={image} onChange={setImage} />
             </View>
           </View>
         </ScrollView>

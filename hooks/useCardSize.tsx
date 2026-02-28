@@ -12,9 +12,13 @@ export default function useCardSize() {
     Math.max(CARD_MIN_WIDTH, width - HORIZONTAL_PADDING * 2),
   );
 
+  const contentAreaWidth = width - HORIZONTAL_PADDING * 2;
+
   return {
-    cardWidth: cardWidth,
+    cardWidth,
     cardGap: CARD_GAP,
     horizontalPadding: HORIZONTAL_PADDING,
+    width,
+    contentAreaWidth,
   };
 }

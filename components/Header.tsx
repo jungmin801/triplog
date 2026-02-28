@@ -83,7 +83,7 @@ export function Header({
           <Avatar
             source={member?.avatar_url}
             size="sm"
-            fallback={member?.display_name ?? "회원님"}
+            fallback={member?.full_name ?? "회원님"}
           />
         ) : null}
       </View>

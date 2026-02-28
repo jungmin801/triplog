@@ -1,34 +1,156 @@
 import { Button, Input } from "@/components";
 import Header from "@/components/Header";
+
+import {
+  LocationPickerModal,
+  PickedPlace,
+} from "@/components/LocationPickerModal";
+import { PhotoPickerField } from "@/components/PhotoPickerField";
+import { MOOD_OPTIONS } from "@/constants/mood";
+import { journeyQueryKeys } from "@/lib/journeyQueries";
+import parseGpsFromExif from "@/lib/parseGps";
+import { reverseGeocode } from "@/lib/reverseGeocode";
+import { supabase } from "@/lib/supabase";
+import { uploadImageToSupabase } from "@/lib/uploadImage";
+import { useAuth } from "@/provider/authProvider";
 import { Ionicons } from "@expo/vector-icons";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { ImagePickerAsset } from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Controller, Resolver, useForm } from "react-hook-form";
+import {
+  Alert,
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { Calendar } from "react-native-calendars";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { z } from "zod";
 import "../global.css";
 
-const MOOD_OPTIONS = [
-  { key: "very_bad", emoji: "😢", label: "아주 나쁨" },
-  { key: "bad", emoji: "😕", label: "나쁨" },
-  { key: "neutral", emoji: "😐", label: "보통" },
-  { key: "good", emoji: "😊", label: "좋음" },
-  { key: "very_good", emoji: "🤩", label: "아주 좋음" },
-] as const;
+function todayString(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+const schema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  mood: z.string().min(1, "Mood is required"),
+  memory_date: z.string().min(1, "날짜를 선택해 주세요"),
+});
+
+type FormValues = z.infer<typeof schema>;
 
 export default function MemoryForm() {
   const router = useRouter();
+  const { session } = useAuth();
+  const { control, handleSubmit } = useForm<FormValues>({
+    resolver: zodResolver(schema) as Resolver<FormValues>,
+    defaultValues: {
+      title: "",
+      description: "",
+      mood: undefined,
+      memory_date: todayString(),
+    },
+  });
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [moods, setMoods] = useState<string>();
+  const [image, setImage] = useState<ImagePickerAsset | null>(null);
+  const [locationOverride, setLocationOverride] = useState<PickedPlace | null>(
+    null,
+  );
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [gpsPlaceName, setGpsPlaceName] = useState<string | null>(null);
 
-  const toggleMood = (key: string) => {
-    setMoods(key);
-  };
+  // 이미지에 GPS가 있으면 역지오코딩으로 장소명 조회
+  useEffect(() => {
+    if (!image) {
+      setGpsPlaceName(null);
+      return;
+    }
+    const gps = parseGpsFromExif(image.exif);
+    if (!gps?.lat || !gps?.lng) {
+      setGpsPlaceName(null);
+      return;
+    }
+    let cancelled = false;
+    reverseGeocode(gps.lat, gps.lng).then((name) => {
+      if (!cancelled) setGpsPlaceName(name);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [image]);
 
-  const handleSubmit = () => {
-    // TODO: save post and go back
-    router.back();
+  const displayPlaceName = locationOverride?.place_name ?? gpsPlaceName ?? null;
+  const queryClient = useQueryClient();
+
+  const createMemoryMutation = useMutation({
+    mutationFn: async (data: FormValues) => {
+      const userId = session?.user?.id;
+      if (!userId || !id || !image)
+        throw new Error("Missing user, journey or image");
+
+      const { count } = await supabase
+        .from("memories")
+        .select("*", { count: "exact", head: true })
+        .eq("journey_id", id);
+
+      if ((count ?? 0) >= 50) {
+        throw new Error("memories_limit");
+      }
+
+      const gps = parseGpsFromExif(image.exif);
+      const lat = locationOverride?.latitude ?? gps?.lat ?? null;
+      const lng = locationOverride?.longitude ?? gps?.lng ?? null;
+      const placeId = locationOverride?.place_id ?? null;
+
+      const imagePath = await uploadImageToSupabase({
+        bucket: "media",
+        uri: image.uri,
+        path: `journeys/${id}/memories/${Date.now()}-${Math.random().toString(36).slice(2, 11)}.jpg`,
+        mimeType: image.mimeType,
+      });
+
+      await supabase.from("memories").insert({
+        journey_id: id,
+        created_by: userId,
+        image_url: imagePath,
+        description: data.title
+          ? `${data.title}\n\n${data.description}`
+          : data.description,
+        latitude: lat,
+        longitude: lng,
+        place_id: placeId,
+        mood: data.mood as "happy" | "excited" | "calm" | "sad" | "surprised",
+        memory_date: data.memory_date,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: journeyQueryKeys.detail(id ?? ""),
+      });
+      router.back();
+    },
+    onError: (err) => {
+      if ((err as Error).message === "memories_limit") {
+        Alert.alert(
+          "메모리 개수 제한",
+          "한 여정에는 최대 50개의 메모리만 추가할 수 있어요.",
+        );
+      }
+    },
+  });
+
+  const onSubmit = (data: FormValues) => {
+    if (!image) return;
+    createMemoryMutation.mutate(data);
   };
 
   return (
@@ -51,73 +173,186 @@ export default function MemoryForm() {
             <Text className="text-body text-ink/60 mb-4">
               새로운 기억을 추가하세요.
             </Text>
-            <Input
-              label="TITLE"
-              placeholder="e.g. Sunset at the Golden Pavilion"
-              value={title}
-              onChangeText={setTitle}
-              containerClassName="mb-5"
+            <Controller
+              control={control}
+              name="title"
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  label="TITLE"
+                  placeholder="e.g. Sunset at the Golden Pavilion"
+                  value={value}
+                  onChangeText={onChange}
+                  containerClassName="mb-5"
+                  maxLength={100}
+                />
+              )}
+            />
+            <Controller
+              control={control}
+              name="description"
+              render={({ field: { onChange, value } }) => (
+                <>
+                  <Text className="text-overline font-bold text-ink/40 mb-1.5">
+                    STORY
+                  </Text>
+                  <TextInput
+                    className="rounded-input border-2 border-ink/5 bg-background px-space-card py-space-card min-h-[100px] text-body text-ink placeholder:text-ink/30"
+                    placeholder="What happened? Share your experience..."
+                    placeholderTextColor="#9ca3af"
+                    value={value}
+                    onChangeText={onChange}
+                    multiline
+                    textAlignVertical="top"
+                  />
+                </>
+              )}
             />
 
-            <View className="mb-5">
-              <Text className="text-overline font-bold text-ink/40 mb-1.5">
-                STORY
-              </Text>
-              <TextInput
-                className="rounded-input border-2 border-ink/5 bg-background px-space-card py-space-card min-h-[100px] text-body text-ink placeholder:text-ink/30"
-                placeholder="What happened? Share your experience..."
-                placeholderTextColor="#9ca3af"
-                value={body}
-                onChangeText={setBody}
-                multiline
-                textAlignVertical="top"
-              />
-            </View>
+            <Controller
+              control={control}
+              name="mood"
+              render={({ field: { onChange, value } }) => (
+                <View className="mb-5">
+                  <Text className="text-overline font-bold text-ink/40 mb-1.5">
+                    MOOD
+                  </Text>
+                  <View className="flex-row gap-2">
+                    {MOOD_OPTIONS.map(({ key, emoji, label }) => {
+                      const isSelected = value === key;
+                      return (
+                        <Pressable
+                          key={label}
+                          onPress={() => onChange(key)}
+                          className={`flex-1 flex-col items-center justify-center rounded-btn border-2 py-3 active:opacity-80 min-h-[72px] ${
+                            isSelected
+                              ? "border-primary bg-primary/10"
+                              : "border-ink/10 bg-background"
+                          }`}
+                        >
+                          <Text className="text-3xl mb-1">{emoji}</Text>
+                          <Text
+                            className={`text-caption font-semibold ${
+                              isSelected ? "text-primary" : "text-ink/70"
+                            }`}
+                            numberOfLines={1}
+                          >
+                            {label}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
+            />
 
-            {/* Mood (5단계, 다중 선택) */}
-            <View className="mb-5">
-              <Text className="text-overline font-bold text-ink/40 mb-1.5">
-                MOOD
-              </Text>
-              <View className="flex-row gap-2">
-                {MOOD_OPTIONS.map(({ key, emoji, label }) => {
-                  const isSelected = moods === key;
-                  return (
+            <Controller
+              control={control}
+              name="memory_date"
+              render={({ field: { onChange, value } }) => (
+                <View className="mb-5">
+                  <Text className="text-overline font-bold text-ink/40 mb-1.5">
+                    DATE
+                  </Text>
+                  <Pressable
+                    onPress={() => setDatePickerOpen(true)}
+                    className="flex-row items-center rounded-input border-2 border-ink/5 bg-background px-space-card h-12"
+                  >
+                    <Ionicons
+                      name="calendar-outline"
+                      size={18}
+                      color="#8e8881"
+                    />
+                    <Text className="text-body text-ink ml-3">
+                      {value
+                        ? new Date(value).toLocaleDateString("ko-KR", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })
+                        : "날짜 선택"}
+                    </Text>
+                  </Pressable>
+                  <Modal
+                    visible={datePickerOpen}
+                    transparent
+                    animationType="fade"
+                    onRequestClose={() => setDatePickerOpen(false)}
+                  >
                     <Pressable
-                      key={key}
-                      onPress={() => toggleMood(key)}
-                      className={`flex-1 flex-col items-center justify-center rounded-btn border-2 py-3 active:opacity-80 min-h-[72px] ${
-                        isSelected
-                          ? "border-primary bg-primary/10"
-                          : "border-ink/10 bg-background"
-                      }`}
+                      className="flex-1 bg-black/40 justify-end"
+                      onPress={() => setDatePickerOpen(false)}
                     >
-                      <Text className="text-3xl mb-1">{emoji}</Text>
-                      <Text
-                        className={`text-caption font-semibold ${
-                          isSelected ? "text-primary" : "text-ink/70"
-                        }`}
-                        numberOfLines={1}
+                      <Pressable
+                        className="bg-background rounded-t-2xl p-4"
+                        onPress={() => {}}
                       >
-                        {label}
-                      </Text>
+                        <View className="flex-row items-center justify-between mb-3">
+                          <Text className="text-base font-semibold text-ink">
+                            메모리 날짜
+                          </Text>
+                          <Pressable
+                            onPress={() => setDatePickerOpen(false)}
+                            hitSlop={10}
+                          >
+                            <Ionicons name="close" size={20} color="#6B7280" />
+                          </Pressable>
+                        </View>
+                        <Calendar
+                          current={value || todayString()}
+                          markedDates={
+                            value
+                              ? {
+                                  [value]: {
+                                    selected: true,
+                                    selectedColor: "#ee845d",
+                                  },
+                                }
+                              : {}
+                          }
+                          onDayPress={(day) => {
+                            onChange(day.dateString);
+                            setDatePickerOpen(false);
+                          }}
+                        />
+                      </Pressable>
                     </Pressable>
-                  );
-                })}
-              </View>
-            </View>
+                  </Modal>
+                </View>
+              )}
+            />
 
-            {/* Photo placeholder */}
-            <Text className="text-overline font-bold text-ink/40 mb-1.5">
-              PHOTO
-            </Text>
-            <Pressable
-              className="mb-8 rounded-card border-2 border-dashed bg-surface-alt items-center justify-center h-40 active:opacity-70"
-              style={{ borderColor: "rgba(26, 31, 43, 0.2)" }}
-            >
-              <Ionicons name="image-outline" size={40} color="#9ca3af" />
-              <Text className="text-body-sm text-ink/50 mt-2">Add photo</Text>
-            </Pressable>
+            {image && !parseGpsFromExif(image.exif) && (
+              <View className="mb-6 rounded-card border-2 border-ink/10 bg-surface-alt p-4">
+                <Text className="text-body text-ink/80 mb-1">
+                  위치를 입력하면 지도에서 볼 수 있어요.
+                </Text>
+                <Pressable
+                  className="mt-2 flex-row items-center justify-center gap-2 py-2.5 rounded-input bg-primary/10 active:opacity-80"
+                  onPress={() => setShowLocationPicker(true)}
+                >
+                  <Ionicons name="map-outline" size={18} color="#ee845d" />
+                  <Text className="text-body font-semibold text-primary">
+                    지도에서 선택하기
+                  </Text>
+                </Pressable>
+              </View>
+            )}
+
+            <PhotoPickerField
+              value={image}
+              onChange={setImage}
+              placeName={displayPlaceName}
+            />
+
+            <LocationPickerModal
+              visible={showLocationPicker}
+              onClose={() => setShowLocationPicker(false)}
+              onSelect={(place: PickedPlace) => {
+                setLocationOverride(place);
+                setShowLocationPicker(false);
+              }}
+            />
           </View>
         </ScrollView>
 
@@ -129,7 +364,7 @@ export default function MemoryForm() {
           <SafeAreaView edges={["bottom"]}>
             <View className="flex-row justify-center px-space-card pb-space-section">
               <Button
-                onPress={() => router.back()}
+                onPress={handleSubmit(onSubmit)}
                 variant="primary"
                 size="md"
                 className="w-full"
