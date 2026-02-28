@@ -26,7 +26,7 @@ type FormValues = {
 };
 
 const schema = z.object({
-  journeyTitle: z.string().min(1, "Journey title is required"),
+  journeyTitle: z.string().min(1, "여정 이름을 입력해 주세요"),
   dateRange: z.object({
     start: z.string().min(1, "Start date is required"),
     end: z.string().min(1, "End date is required"),
@@ -106,7 +106,7 @@ export default function JourneyForm() {
         <Header
           showBack
           onPressBack={() => router.back()}
-          center={{ kind: "title", title: "New Journey" }}
+          center={{ kind: "title", title: "새 여정" }}
           showAvatar={false}
         />
         <ScrollView
@@ -116,10 +116,10 @@ export default function JourneyForm() {
         >
           <View className="px-space-card pb-32 pt-space-section">
             <Text className="text-h1 font-bold text-ink mb-1">
-              Plan your trip
+              여정을 시작해 보세요
             </Text>
             <Text className="text-body text-ink/60 mb-4">
-              새로운 여정을 시작하세요.
+              함께할 여정의 이름과 기간을 정해 주세요.
             </Text>
 
             <View className="flex-col gap-5">
@@ -129,8 +129,8 @@ export default function JourneyForm() {
                 name="journeyTitle"
                 render={({ field: { onChange, value } }) => (
                   <Input
-                    label="TRIP TITLE"
-                    placeholder="e.g. 2026 Summer Vacation"
+                    label="여정 이름"
+                    placeholder="예: 2026 여름 방학"
                     value={value}
                     onChangeText={onChange}
                   />
@@ -168,7 +168,7 @@ export default function JourneyForm() {
                 size="md"
                 className="w-full"
               >
-                Create Journey
+                여정 만들기
               </Button>
             </View>
           </SafeAreaView>

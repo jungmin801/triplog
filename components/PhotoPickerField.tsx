@@ -13,7 +13,7 @@ export type PhotoPickerFieldProps = {
 };
 
 export function PhotoPickerField({
-  label = "PHOTO",
+  label = "사진",
   value,
   onChange,
   containerClassName = "",
@@ -47,7 +47,7 @@ export function PhotoPickerField({
           onPress={handlePick}
         >
           <Ionicons name="image-outline" size={40} color="#9ca3af" />
-          <Text className="text-body-sm text-ink/50 mt-2">Add photo</Text>
+          <Text className="text-body-sm text-ink/50 mt-2">사진 추가</Text>
         </Pressable>
       ) : (
         <View className="rounded-card overflow-hidden bg-surface-alt">
@@ -69,7 +69,7 @@ export function PhotoPickerField({
                 color="#6B7280"
               />
               <Text className="text-body-sm font-medium text-ink/70">
-                Change photo
+                사진 바꾸기
               </Text>
             </Pressable>
             <View className="w-px bg-ink/10" />
@@ -83,7 +83,7 @@ export function PhotoPickerField({
                 color="#6B7280"
               />
               <Text className="text-body-sm font-medium text-ink/70">
-                Remove
+                삭제
               </Text>
             </Pressable>
           </View>

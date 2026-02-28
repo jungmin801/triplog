@@ -46,7 +46,7 @@ export default function JourneyDetailsRoute() {
     setActiveIndex(Math.min(Math.max(0, index), Math.max(0, entriesCount - 1)));
   };
 
-  const headerTitle = journey?.title ?? "Journey";
+  const headerTitle = journey?.title ?? "여정";
   const headerSubtitle = journey?.dateRange ?? "";
 
   return (
@@ -72,7 +72,7 @@ export default function JourneyDetailsRoute() {
             {memories.length === 0 ? (
               <View className="flex-1 items-center justify-center py-16 px-6">
                 <Text className="text-body text-ink/60 text-center">
-                  아직 메모리가 없어요.{"\n"}첫 메모리를 추가해 보세요.
+                  아직 남긴 기억이 없어요.{"\n"}첫 기억을 남겨 보세요.
                 </Text>
               </View>
             ) : (
@@ -120,7 +120,7 @@ export default function JourneyDetailsRoute() {
                             <Card.Image source={{ uri: entry.imageUri }} />
                             {entry.mood ? (
                               <View className="absolute bottom-3 left-3 right-3 flex-row items-center justify-end">
-                                <View className="rounded-pill bg-background/90 px-1.5 py-1.5">
+                                <View className="rounded-pill bg-background/90 px-1.5 py-1">
                                   <Text className="text-lg font-bold text-ink">
                                     {parseMood(entry.mood)?.emoji}
                                   </Text>
@@ -168,15 +168,15 @@ export default function JourneyDetailsRoute() {
             {/* Add Memory button */}
             <View className="px-space-card pb-8 flex-row justify-between">
               <Button
-                variant="soft"
+                variant="primary"
                 size="sm"
                 onPress={() =>
                   router.push(`/journeys/${journeyId}/memories/new`)
                 }
               >
-                <Ionicons name="camera-outline" size={18} color="#ee845d" />
-                <Text className="text-btn-sm font-bold text-primary">
-                  Add Memory
+                <Ionicons name="camera-outline" size={18} color="white" />
+                <Text className="text-btn-sm font-bold text-white">
+                  기억 남기기
                 </Text>
               </Button>
               <View className="flex-row items-center gap-2">

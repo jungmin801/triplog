@@ -22,19 +22,19 @@ export default function JourneysHome() {
   const tabs: NavTab[] = [
     {
       key: "journeys",
-      label: "Home",
+      label: "홈",
       icon: "home-outline",
       href: "/journeys",
     },
     {
       key: "new",
-      label: "Journeys",
+      label: "여정",
       icon: "add-outline",
       href: "/journeys/new",
     },
     {
       key: "profile",
-      label: "Profile",
+      label: "프로필",
       icon: "person-outline",
       href: "/profile",
     },
@@ -59,7 +59,7 @@ export default function JourneysHome() {
           </Text>
           <View className="pb-6 w-full flex-1 min-h-dvh">
             <Text className="text-h2 font-bold text-ink mb-4">
-              Your Journeys
+              함께한 여정
             </Text>
 
             {isLoading ? (
@@ -87,7 +87,7 @@ export default function JourneysHome() {
                     />
                     <View className="absolute top-3 right-3">
                       <Tag variant="primary">
-                        {findCountry(journey.country_code)?.name ?? "Unknown"}
+                        {findCountry(journey.country_code)?.name ?? "미지정"}
                       </Tag>
                     </View>
                   </View>
@@ -111,7 +111,7 @@ export default function JourneysHome() {
                         </View>
                       </View>
                       <Text className="text-overline text-primary">
-                        48 Photos
+                        사진 48장
                       </Text>
                     </View>
                   </Card.Content>

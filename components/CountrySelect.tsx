@@ -20,10 +20,10 @@ export type CountrySelectProps = {
 };
 
 export function CountrySelect({
-  label = "COUNTRY",
+  label = "나라",
   value,
   onChange,
-  placeholder = "Select country",
+  placeholder = "나라 선택",
   containerClassName = "",
 }: CountrySelectProps) {
   const [open, setOpen] = useState(false);
@@ -92,7 +92,7 @@ export function CountrySelect({
             <View className="p-4 border-b border-ink/5">
               <View className="flex-row items-center justify-between mb-3">
                 <Text className="text-base font-semibold text-ink">
-                  Select country
+                  나라 선택
                 </Text>
                 <Pressable onPress={() => setOpen(false)} hitSlop={10}>
                   <Ionicons name="close" size={20} color="#6B7280" />
@@ -100,7 +100,7 @@ export function CountrySelect({
               </View>
               <TextInput
                 className="rounded-input border-2 border-ink/10 bg-surface-alt px-3 h-11 text-body text-ink placeholder:text-ink/40"
-                placeholder="Search country..."
+                placeholder="나라 검색..."
                 placeholderTextColor="#9ca3af"
                 value={query}
                 onChangeText={setQuery}
@@ -113,7 +113,7 @@ export function CountrySelect({
               className="max-h-80"
               ListEmptyComponent={
                 <Text className="text-body text-ink/50 p-4 text-center">
-                  No countries found
+                  검색 결과 없음
                 </Text>
               }
               renderItem={({ item }) => (
@@ -139,13 +139,13 @@ export function CountrySelect({
                 className="flex-1 h-11 rounded-input border border-ink/10 items-center justify-center"
                 onPress={onClear}
               >
-                <Text className="text-ink/70 font-semibold">Clear</Text>
+                <Text className="text-ink/70 font-semibold">지우기</Text>
               </Pressable>
               <Pressable
                 className="flex-1 h-11 rounded-input bg-primary items-center justify-center"
                 onPress={() => setOpen(false)}
               >
-                <Text className="text-white font-semibold">Done</Text>
+                <Text className="text-white font-semibold">완료</Text>
               </Pressable>
             </View>
           </Pressable>

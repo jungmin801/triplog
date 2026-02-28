@@ -81,7 +81,7 @@ export default function Login() {
               Triplog
             </Text>
             <Text className="text-body text-ink/60 text-center mb-10 max-w-[240px]">
-              Your minimalist companion for every journey.
+              여정마다 함께하는 작은 동반자.
             </Text>
 
             <View className="w-full max-w-[270px]">
@@ -96,7 +96,7 @@ export default function Login() {
                   className="w-5 h-5"
                 />
                 <Text className="text-btn font-bold text-ink">
-                  Continue with Google
+                  Google로 계속하기
                 </Text>
               </Button>
 

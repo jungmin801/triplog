@@ -62,7 +62,7 @@ export default function FolderRoute() {
         </View>
 
         <Text className="text-overline font-bold text-ink/40 px-space-card mb-3">
-          ROUTE
+          경로
         </Text>
 
         {/* Map placeholder — 나중에 Google Map + 마커 */}
@@ -73,7 +73,7 @@ export default function FolderRoute() {
           <View className="flex-1 items-center justify-center">
             <Ionicons name="map-outline" size={48} color="#9ca3af" />
             <Text className="text-body-sm text-ink/50 mt-2">
-              Map (Google Map)
+              지도
             </Text>
           </View>
         </View>
@@ -81,7 +81,7 @@ export default function FolderRoute() {
         {/* Timeline */}
         <View className="flex-1 mt-4 px-space-card">
           <Text className="text-overline font-bold text-ink/40 mb-4">
-            TIMELINE
+            타임라인
           </Text>
           <ScrollView
             className="flex-1"

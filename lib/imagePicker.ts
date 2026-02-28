@@ -3,7 +3,7 @@ import * as ImagePicker from "expo-image-picker";
 export async function pickImage() {
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!permission.granted) {
-    alert("Permission required");
+    alert("갤러리 접근 권한이 필요해요.");
     return null;
   }
 

@@ -39,9 +39,9 @@ function todayString(): string {
 }
 
 const schema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().min(1, "Description is required"),
-  mood: z.string().min(1, "Mood is required"),
+  title: z.string().min(1, "제목을 입력해 주세요"),
+  description: z.string().min(1, "이야기를 입력해 주세요"),
+  mood: z.string().min(1, "오늘의 감정을 선택해 주세요"),
   memory_date: z.string().min(1, "날짜를 선택해 주세요"),
 });
 
@@ -141,8 +141,8 @@ export default function MemoryForm() {
     onError: (err) => {
       if ((err as Error).message === "memories_limit") {
         Alert.alert(
-          "메모리 개수 제한",
-          "한 여정에는 최대 50개의 메모리만 추가할 수 있어요.",
+          "기억은 여정당 50개까지",
+          "한 여정에는 최대 50개의 기억만 남길 수 있어요.",
         );
       }
     },
@@ -160,7 +160,7 @@ export default function MemoryForm() {
         <Header
           showBack
           onPressBack={() => router.back()}
-          center={{ kind: "title", title: "New Memory" }}
+          center={{ kind: "title", title: "새 기억" }}
           showAvatar={false}
         />
         <ScrollView
@@ -169,17 +169,17 @@ export default function MemoryForm() {
           keyboardShouldPersistTaps="handled"
         >
           <View className="px-space-card pb-32 pt-space-section">
-            <Text className="text-h1 font-bold text-ink mb-1">New Memory</Text>
+            <Text className="text-h1 font-bold text-ink mb-1">새로운 기억</Text>
             <Text className="text-body text-ink/60 mb-4">
-              새로운 기억을 추가하세요.
+              그날의 순간을 기록해 보세요.
             </Text>
             <Controller
               control={control}
               name="title"
               render={({ field: { onChange, value } }) => (
                 <Input
-                  label="TITLE"
-                  placeholder="e.g. Sunset at the Golden Pavilion"
+                  label="제목"
+                  placeholder="예: 금각사 노을"
                   value={value}
                   onChangeText={onChange}
                   containerClassName="mb-5"
@@ -193,11 +193,11 @@ export default function MemoryForm() {
               render={({ field: { onChange, value } }) => (
                 <>
                   <Text className="text-overline font-bold text-ink/40 mb-1.5">
-                    STORY
+                    이야기
                   </Text>
                   <TextInput
                     className="rounded-input border-2 border-ink/5 bg-background px-space-card py-space-card min-h-[100px] text-body text-ink placeholder:text-ink/30"
-                    placeholder="What happened? Share your experience..."
+                    placeholder="무슨 일이 있었나요? 그날의 이야기를 들려주세요."
                     placeholderTextColor="#9ca3af"
                     value={value}
                     onChangeText={onChange}
@@ -214,7 +214,7 @@ export default function MemoryForm() {
               render={({ field: { onChange, value } }) => (
                 <View className="mb-5">
                   <Text className="text-overline font-bold text-ink/40 mb-1.5">
-                    MOOD
+                    오늘의 감정
                   </Text>
                   <View className="flex-row gap-2">
                     {MOOD_OPTIONS.map(({ key, emoji, label }) => {
@@ -252,7 +252,7 @@ export default function MemoryForm() {
               render={({ field: { onChange, value } }) => (
                 <View className="mb-5">
                   <Text className="text-overline font-bold text-ink/40 mb-1.5">
-                    DATE
+                    날짜
                   </Text>
                   <Pressable
                     onPress={() => setDatePickerOpen(true)}
@@ -289,7 +289,7 @@ export default function MemoryForm() {
                       >
                         <View className="flex-row items-center justify-between mb-3">
                           <Text className="text-base font-semibold text-ink">
-                            메모리 날짜
+                            그날의 날짜
                           </Text>
                           <Pressable
                             onPress={() => setDatePickerOpen(false)}
@@ -369,7 +369,7 @@ export default function MemoryForm() {
                 size="md"
                 className="w-full"
               >
-                Save Memory
+                기억 남기기
               </Button>
             </View>
           </SafeAreaView>

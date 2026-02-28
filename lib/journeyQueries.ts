@@ -115,7 +115,7 @@ export async function fetchJourneyDetail(
   result.memories = await Promise.all(
     memoriesData.map(async (m) => {
       const desc = (m.description ?? "").trim();
-      const firstLine = desc.split("\n")[0]?.trim() || "Memory";
+      const firstLine = desc.split("\n")[0]?.trim() || "기억";
       const subtitle = desc.includes("\n")
         ? desc.split("\n").slice(1).join(" ").trim().slice(0, 80)
         : desc.slice(0, 80);

@@ -6,7 +6,7 @@ import { Calendar } from "react-native-calendars";
 type DateRange = { start?: string; end?: string }; // YYYY-MM-DD
 
 function formatLabel(range: DateRange) {
-  if (!range.start) return "Select dates";
+  if (!range.start) return "날짜 선택";
   if (!range.end) return `${range.start} ~`;
   return `${range.start} ~ ${range.end}`;
 }
@@ -85,7 +85,7 @@ export function DateRangeInput({
       {/* Trigger */}
       <Pressable onPress={() => setOpen(true)}>
         <Text className="text-overline font-bold text-ink/40 mb-1.5">
-          DATE RANGE
+          여정 기간
         </Text>
         <View className="flex-row items-center rounded-input border-2 border-ink/5 bg-background px-space-card h-12">
           <Ionicons name="calendar-outline" size={18} color="#8e8881" />
@@ -111,7 +111,7 @@ export function DateRangeInput({
           >
             <View className="flex-row items-center justify-between mb-3">
               <Text className="text-base font-semibold text-ink">
-                Select dates
+                날짜 선택
               </Text>
               <Pressable onPress={() => setOpen(false)} hitSlop={10}>
                 <Ionicons name="close" size={20} color="#6B7280" />
@@ -129,7 +129,7 @@ export function DateRangeInput({
                 className="flex-1 h-11 rounded-input border border-ink/10 items-center justify-center"
                 onPress={() => onChange({ start: undefined, end: undefined })}
               >
-                <Text className="text-ink/70 font-semibold">Clear</Text>
+                <Text className="text-ink/70 font-semibold">지우기</Text>
               </Pressable>
 
               <Pressable
@@ -137,7 +137,7 @@ export function DateRangeInput({
                 onPress={() => setOpen(false)}
                 disabled={!safeValue.start}
               >
-                <Text className="text-white font-semibold">Done</Text>
+                <Text className="text-white font-semibold">완료</Text>
               </Pressable>
             </View>
           </Pressable>

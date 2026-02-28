@@ -42,22 +42,16 @@ export default function Profile() {
   });
 
   const tabs: NavTab[] = [
-    { key: "journeys", label: "Home", icon: "home-outline", href: "/journeys" },
+    { key: "journeys", label: "홈", icon: "home-outline", href: "/journeys" },
     {
       key: "new",
-      label: "Journeys",
+      label: "여정",
       icon: "add-outline",
       href: "/journeys/new",
     },
     {
-      key: "search",
-      label: "Search",
-      icon: "search-outline",
-      href: "/(tabs)/search" as Href,
-    },
-    {
       key: "profile",
-      label: "Profile",
+      label: "프로필",
       icon: "person-outline",
       href: "/profile",
     },
@@ -78,7 +72,7 @@ export default function Profile() {
     <View className="flex-1 bg-surface">
       <SafeAreaView className="flex-1" edges={["top"]}>
         <Header
-          center={{ kind: "title", title: "My Page" }}
+          center={{ kind: "title", title: "마이페이지" }}
           showAvatar={false}
         />
 
@@ -92,6 +86,7 @@ export default function Profile() {
             <View className="flex-row items-start gap-4 mb-6">
               <Avatar
                 size="xl"
+                source={member?.avatar_url}
                 fallback={fallbackInitials}
                 className="border-2 border-primary"
               />
@@ -116,7 +111,7 @@ export default function Profile() {
                       {stats?.memoryCount ?? 0}
                     </Text>
                     <Text className="text-overline font-bold text-ink/40 mt-0.5">
-                      포스트한 메모리
+                      남긴 기억
                     </Text>
                   </View>
                 </View>
@@ -125,7 +120,7 @@ export default function Profile() {
 
             {/* My Journey - 리스트 카드 (썸네일 + 타이틀 + 기간 + country 뱃지) */}
             <Text className="text-overline font-bold text-ink/40 mb-2">
-              MY JOURNEY
+              내 여정
             </Text>
             <View className="gap-2 mb-6">
               {myJourneys.length === 0 ? (
@@ -165,7 +160,7 @@ export default function Profile() {
                         className="text-h4 font-bold text-ink"
                         numberOfLines={1}
                       >
-                        {journey.title || "Untitled"}
+                        {journey.title || "제목 없음"}
                       </Text>
                       <Text
                         className="text-caption text-ink/50 mt-0.5"
@@ -204,7 +199,7 @@ export default function Profile() {
               onPress={onLogout}
               className="w-full"
             >
-              Logout
+              로그아웃
             </Button>
           </View>
         </ScrollView>
