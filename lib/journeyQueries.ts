@@ -47,28 +47,59 @@ export async function fetchJourneys(): Promise<Journey[]> {
   }
 
   const journeys = (data ?? []) as Journey[];
+  const journeyIds = journeys.map((j) => j.id);
+
+  // 참여 멤버 수, 기억 개수 조회
+  const [memberCountByJourney, memoryCountByJourney] = await Promise.all([
+    (async () => {
+      if (journeyIds.length === 0) return {} as Record<string, number>;
+      const { data: rows } = await supabase
+        .from("journey_members")
+        .select("journey_id")
+        .in("journey_id", journeyIds);
+      const map: Record<string, number> = {};
+      for (const r of rows ?? []) {
+        const id = (r as { journey_id: string }).journey_id;
+        map[id] = (map[id] ?? 0) + 1;
+      }
+      return map;
+    })(),
+    (async () => {
+      if (journeyIds.length === 0) return {} as Record<string, number>;
+      const { data: rows } = await supabase
+        .from("memories")
+        .select("journey_id")
+        .in("journey_id", journeyIds);
+      const map: Record<string, number> = {};
+      for (const r of rows ?? []) {
+        const id = (r as { journey_id: string }).journey_id;
+        map[id] = (map[id] ?? 0) + 1;
+      }
+      return map;
+    })(),
+  ]);
+
   const paths = journeys
     .map((j) => j.thumbnail_url)
     .filter((p): p is string => typeof p === "string" && p.length > 0);
 
-  if (paths.length === 0) return journeys;
-
-  const { data: signedList, error: signedErr } = await supabase.storage
-    .from("media")
-    .createSignedUrls(paths, 60 * 60);
-
-  if (signedErr) {
-    console.error("Error creating signed urls:", signedErr);
-    return journeys;
+  let urlByPath = new Map<string, string>();
+  if (paths.length > 0) {
+    const { data: signedList, error: signedErr } = await supabase.storage
+      .from("media")
+      .createSignedUrls(paths, 60 * 60);
+    if (!signedErr && signedList) {
+      urlByPath = new Map(
+        signedList.map((x) => [x.path, x.signedUrl] as const),
+      );
+    }
   }
-
-  const urlByPath = new Map(
-    (signedList ?? []).map((x) => [x.path, x.signedUrl] as const),
-  );
 
   return journeys.map((j) => ({
     ...j,
     thumbnail: j.thumbnail_url ? urlByPath.get(j.thumbnail_url) ?? null : null,
+    member_count: memberCountByJourney[j.id] ?? 0,
+    memory_count: memoryCountByJourney[j.id] ?? 0,
   })) as Journey[];
 }
 

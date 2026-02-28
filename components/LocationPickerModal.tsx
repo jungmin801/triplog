@@ -9,10 +9,10 @@ import {
   Modal,
   Platform,
   Pressable,
-  Text,
   TextInput,
   View,
 } from "react-native";
+import { Text } from "./Text";
 import MapView, { Marker } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 

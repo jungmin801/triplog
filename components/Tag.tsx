@@ -1,4 +1,5 @@
-import { Pressable, Text, View, type ViewProps } from "react-native";
+import { Pressable, View, type ViewProps } from "react-native";
+import { Text } from "./Text";
 
 type TagVariant = "primary" | "muted";
 

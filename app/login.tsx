@@ -3,7 +3,8 @@ import { supabase } from "@/lib/supabase";
 import { makeRedirectUri } from "expo-auth-session";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { Image, ScrollView, Text, View } from "react-native";
+import { Image, ScrollView, View } from "react-native";
+import { Text } from "@/components";
 import { SafeAreaView } from "react-native-safe-area-context";
 import "../global.css";
 

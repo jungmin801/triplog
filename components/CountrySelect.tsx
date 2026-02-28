@@ -5,10 +5,10 @@ import {
   FlatList,
   Modal,
   Pressable,
-  Text,
   TextInput,
   View,
 } from "react-native";
+import { Text } from "./Text";
 
 /** value/onChange는 국가 코드(code) 기준. 백엔드에는 code 전달. */
 export type CountrySelectProps = {

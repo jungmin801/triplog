@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import type { Href } from "expo-router";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
+import { Text } from "./Text";
 
 export type NavTab = {
   key: string;

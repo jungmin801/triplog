@@ -1,7 +1,8 @@
 import useMember from "@/hooks/useMember";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Image, Pressable, Text, View } from "react-native";
+import { Image, Pressable, View } from "react-native";
+import { Text } from "./Text";
 import { Avatar } from "./Avatar";
 
 type HeaderCenter =

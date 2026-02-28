@@ -1,7 +1,8 @@
 import { pickImage } from "@/lib/imagePicker";
 import { Ionicons } from "@expo/vector-icons";
 import { ImagePickerAsset } from "expo-image-picker";
-import { Image, Pressable, Text, View } from "react-native";
+import { Image, Pressable, View } from "react-native";
+import { Text } from "./Text";
 
 export type PhotoPickerFieldProps = {
   label?: string;

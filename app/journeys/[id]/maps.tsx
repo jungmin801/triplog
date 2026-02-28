@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Image, Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
+import { Image, Pressable, ScrollView, useWindowDimensions, View } from "react-native";
+import { Text } from "@/components";
 import { SafeAreaView } from "react-native-safe-area-context";
 import "../../../global.css";
 

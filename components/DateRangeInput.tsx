@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useMemo, useState } from "react";
-import { Modal, Pressable, Text, View } from "react-native";
+import { Modal, Pressable, View } from "react-native";
+import { Text } from "./Text";
 import { Calendar } from "react-native-calendars";
 
 type DateRange = { start?: string; end?: string }; // YYYY-MM-DD

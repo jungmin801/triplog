@@ -1,4 +1,5 @@
-import { View, TextInput, Text, type TextInputProps } from 'react-native';
+import { View, TextInput, type TextInputProps } from "react-native";
+import { Text } from "./Text";
 import { useState } from 'react';
 
 export type InputProps = TextInputProps & {

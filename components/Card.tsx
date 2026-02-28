@@ -1,12 +1,12 @@
 import {
   Image,
   Pressable,
-  Text,
   View,
   type ImageSourcePropType,
   type TextProps,
   type ViewProps,
 } from "react-native";
+import { Text } from "./Text";
 import { Button } from "./Button";
 
 type CardVariant = "elevated" | "outlined" | "polaroid";
@@ -39,12 +39,12 @@ function CardRoot({
     <Wrapper
       className={`${baseClasses} ${variantClasses[variant]} ${className}`}
       onPress={onPress}
-      style={{
-        width: cardWidth,
-      }}
+      style={{ width: cardWidth }}
       {...(props as any)}
     >
-      {isPolaroid ? <View className="p-4 h-full">{children}</View> : children}
+      {isPolaroid ? <View className="p-4">{children}</View> : (
+        children
+      )}
     </Wrapper>
   );
 }
@@ -86,7 +86,7 @@ export type CardContentProps = ViewProps & {
 
 function CardContent({ children, className = "", ...props }: CardContentProps) {
   return (
-    <View className={`flex-1 py-2 ${className}`} {...props}>
+    <View className={`py-2 ${className}`} {...props}>
       {children}
     </View>
   );

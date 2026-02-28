@@ -1,4 +1,5 @@
-import { Image, Text, View, type ImageSourcePropType } from "react-native";
+import { Image, View, type ImageSourcePropType } from "react-native";
+import { Text } from "./Text";
 
 type AvatarSize = "sm" | "md" | "lg" | "xl";
 

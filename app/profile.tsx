@@ -12,7 +12,8 @@ import { useAuth } from "@/provider/authProvider";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { type Href, useRouter } from "expo-router";
-import { Image, Pressable, ScrollView, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, View } from "react-native";
+import { Text } from "@/components";
 import { SafeAreaView } from "react-native-safe-area-context";
 import "../global.css";
 

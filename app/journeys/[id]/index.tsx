@@ -10,11 +10,11 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import {
   ScrollView,
-  Text,
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from "react-native";
+import { Text } from "@/components";
 import { SafeAreaView } from "react-native-safe-area-context";
 import "../../../global.css";
 
@@ -54,7 +54,7 @@ export default function JourneyDetailsRoute() {
       <SafeAreaView className="flex-1" edges={["top"]}>
         <Header
           showBack
-          onPressBack={() => router.back()}
+          onPressBack={() => router.push("/journeys")}
           center={{
             kind: "title",
             title: headerTitle,

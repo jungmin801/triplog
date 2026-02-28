@@ -25,10 +25,10 @@ import {
   Modal,
   Pressable,
   ScrollView,
-  Text,
   TextInput,
   View,
 } from "react-native";
+import { Text } from "@/components";
 import { Calendar } from "react-native-calendars";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { z } from "zod";
