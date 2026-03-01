@@ -1,10 +1,9 @@
-import { Button } from "@/components";
+import { Button, Text } from "@/components";
 import { supabase } from "@/lib/supabase";
 import { makeRedirectUri } from "expo-auth-session";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { Image, ScrollView, View } from "react-native";
-import { Text } from "@/components";
 import { SafeAreaView } from "react-native-safe-area-context";
 import "../global.css";
 
@@ -75,15 +74,10 @@ export default function Login() {
         >
           <View className="flex-1 px-space-card pt-16 pb-8 items-center justify-center min-h-[80%]">
             {/* Logo area with primary tint */}
-            <View className="w-20 h-20 rounded-pill bg-primary/10 items-center justify-center mb-6">
-              <Text className="text-4xl">✈️</Text>
-            </View>
-            <Text className="text-h1 font-bold text-ink text-center mb-3">
-              Triplog
-            </Text>
-            <Text className="text-body text-ink/60 text-center mb-10 max-w-[240px]">
-              여정마다 함께하는 작은 동반자.
-            </Text>
+            <Image
+              source={require("../assets/images/logo_main.png")}
+              className="w-80 h-80 rounded-pill items-center justify-center"
+            />
 
             <View className="w-full max-w-[270px]">
               <Button

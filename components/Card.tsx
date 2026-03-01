@@ -42,7 +42,11 @@ function CardRoot({
       style={{ width: cardWidth }}
       {...(props as any)}
     >
-      {isPolaroid ? <View className="p-4">{children}</View> : (
+      {isPolaroid ? (
+        <View className="flex-1 flex-col p-4">
+          {children}
+        </View>
+      ) : (
         children
       )}
     </Wrapper>

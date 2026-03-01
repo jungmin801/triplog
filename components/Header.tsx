@@ -2,8 +2,8 @@ import useMember from "@/hooks/useMember";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Image, Pressable, View } from "react-native";
-import { Text } from "./Text";
 import { Avatar } from "./Avatar";
+import { Text } from "./Text";
 
 type HeaderCenter =
   | { kind: "logo" }
@@ -55,14 +55,20 @@ export function Header({
 
       <View className="flex-1 items-center">
         {center.kind === "logo" ? (
-          <Image
-            source={require("../assets/images/logo.png")}
-            resizeMode="contain"
-            style={{
-              width: 64,
-              height: 24,
-            }}
-          />
+          <View
+            style={{ width: 96, height: 32 }}
+            className="items-center justify-center overflow-hidden"
+          >
+            <Image
+              source={require("../assets/images/logo_title.png")}
+              resizeMode="contain"
+              style={{
+                width: 96,
+                height: 32,
+                transform: [{ scale: 3 }],
+              }}
+            />
+          </View>
         ) : (
           <>
             <Text className="text-lg font-semibold text-ink">

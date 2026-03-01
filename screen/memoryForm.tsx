@@ -1,13 +1,18 @@
 import { Button, Input } from "@/components";
 import Header from "@/components/Header";
 
+import { Text } from "@/components";
 import {
   LocationPickerModal,
   PickedPlace,
 } from "@/components/LocationPickerModal";
 import { PhotoPickerField } from "@/components/PhotoPickerField";
 import { MOOD_OPTIONS } from "@/constants/mood";
-import { journeyQueryKeys } from "@/lib/journeyQueries";
+import {
+  fetchMemoryForEdit,
+  journeyQueryKeys,
+  updateMemory,
+} from "@/lib/journeyQueries";
 import parseGpsFromExif from "@/lib/parseGps";
 import { reverseGeocode } from "@/lib/reverseGeocode";
 import { supabase } from "@/lib/supabase";
@@ -15,12 +20,13 @@ import { uploadImageToSupabase } from "@/lib/uploadImage";
 import { useAuth } from "@/provider/authProvider";
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImagePickerAsset } from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Controller, Resolver, useForm } from "react-hook-form";
 import {
+  ActivityIndicator,
   Alert,
   Modal,
   Pressable,
@@ -28,7 +34,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Text } from "@/components";
 import { Calendar } from "react-native-calendars";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { z } from "zod";
@@ -50,7 +55,12 @@ type FormValues = z.infer<typeof schema>;
 export default function MemoryForm() {
   const router = useRouter();
   const { session } = useAuth();
-  const { control, handleSubmit } = useForm<FormValues>({
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<FormValues>({
     resolver: zodResolver(schema) as Resolver<FormValues>,
     defaultValues: {
       title: "",
@@ -59,14 +69,39 @@ export default function MemoryForm() {
       memory_date: todayString(),
     },
   });
+
+  console.log(errors);
+
   const [datePickerOpen, setDatePickerOpen] = useState(false);
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id: journeyId, memoryId } = useLocalSearchParams<{
+    id: string;
+    memoryId?: string;
+  }>();
+  const id = journeyId; // create 시 journey_id
+  const isEdit = !!memoryId;
+
+  const { data: memoryForEdit, isLoading: isLoadingEdit } = useQuery({
+    queryKey: [...journeyQueryKeys.detail(id ?? ""), "memory", memoryId],
+    queryFn: () => fetchMemoryForEdit(memoryId ?? ""),
+    enabled: isEdit && !!memoryId,
+  });
+
   const [image, setImage] = useState<ImagePickerAsset | null>(null);
   const [locationOverride, setLocationOverride] = useState<PickedPlace | null>(
     null,
   );
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [gpsPlaceName, setGpsPlaceName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!memoryForEdit) return;
+    reset({
+      title: memoryForEdit.title,
+      description: memoryForEdit.description,
+      mood: memoryForEdit.mood,
+      memory_date: memoryForEdit.memory_date,
+    });
+  }, [memoryForEdit, reset]);
 
   // 이미지에 GPS가 있으면 역지오코딩으로 장소명 조회
   useEffect(() => {
@@ -148,10 +183,65 @@ export default function MemoryForm() {
     },
   });
 
+  const updateMemoryMutation = useMutation({
+    mutationFn: async ({
+      data,
+      existingImagePath,
+    }: {
+      data: FormValues;
+      /** 편집 시 기존 이미지 storage path (이미지 안 바꾸면 유지용) */
+      existingImagePath: string | null;
+    }) => {
+      if (!memoryId) throw new Error("No memory id");
+      let imageUrl: string | undefined = undefined;
+      if (image) {
+        const path = await uploadImageToSupabase({
+          bucket: "media",
+          uri: image.uri,
+          path: `journeys/${id}/memories/${Date.now()}-${Math.random().toString(36).slice(2, 11)}.jpg`,
+          mimeType: image.mimeType,
+        });
+        if (path) imageUrl = path;
+      } else if (existingImagePath) {
+        imageUrl = existingImagePath;
+      }
+      const descriptionText = data.title
+        ? `${data.title}\n\n${data.description}`
+        : data.description;
+      await updateMemory(memoryId, {
+        description: descriptionText,
+        mood: data.mood,
+        memory_date: data.memory_date,
+        ...(imageUrl !== undefined && { image_url: imageUrl }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: journeyQueryKeys.detail(id ?? ""),
+      });
+      router.back();
+    },
+  });
+
   const onSubmit = (data: FormValues) => {
-    if (!image) return;
-    createMemoryMutation.mutate(data);
+    if (isEdit) {
+      updateMemoryMutation.mutate({
+        data,
+        existingImagePath: memoryForEdit?.image_url ?? null,
+      });
+    } else {
+      if (!image) return;
+      createMemoryMutation.mutate(data);
+    }
   };
+
+  if (isEdit && isLoadingEdit) {
+    return (
+      <View className="flex-1 bg-surface items-center justify-center">
+        <ActivityIndicator size="large" color="#ee845d" />
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1 }} className="bg-surface">
@@ -160,7 +250,10 @@ export default function MemoryForm() {
         <Header
           showBack
           onPressBack={() => router.back()}
-          center={{ kind: "title", title: "새 기억" }}
+          center={{
+            kind: "title",
+            title: isEdit ? "기억 수정" : "새 기억",
+          }}
           showAvatar={false}
         />
         <ScrollView
@@ -169,9 +262,13 @@ export default function MemoryForm() {
           keyboardShouldPersistTaps="handled"
         >
           <View className="px-space-card pb-32 pt-space-section">
-            <Text className="text-h1 font-bold text-ink mb-1">새로운 기억</Text>
+            <Text className="text-h1 font-bold text-ink mb-1">
+              {isEdit ? "기억 수정" : "새로운 기억"}
+            </Text>
             <Text className="text-body text-ink/60 mb-4">
-              그날의 순간을 기록해 보세요.
+              {isEdit
+                ? "제목, 이야기, 감정, 날짜를 수정할 수 있어요."
+                : "그날의 순간을 기록해 보세요."}
             </Text>
             <Controller
               control={control}
@@ -343,6 +440,9 @@ export default function MemoryForm() {
               value={image}
               onChange={setImage}
               placeName={displayPlaceName}
+              existingImageUri={
+                isEdit ? (memoryForEdit?.image_signed_url ?? null) : null
+              }
             />
 
             <LocationPickerModal
@@ -368,8 +468,12 @@ export default function MemoryForm() {
                 variant="primary"
                 size="md"
                 className="w-full"
+                disabled={
+                  createMemoryMutation.isPending ||
+                  updateMemoryMutation.isPending
+                }
               >
-                기억 남기기
+                {isEdit ? "수정 완료" : "기억 남기기"}
               </Button>
             </View>
           </SafeAreaView>

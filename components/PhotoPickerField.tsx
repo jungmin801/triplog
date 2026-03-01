@@ -9,8 +9,9 @@ export type PhotoPickerFieldProps = {
   value: ImagePickerAsset | null;
   onChange: (asset: ImagePickerAsset | null) => void;
   containerClassName?: string;
-  /** PHOTO 라벨 아래에 마커 아이콘 + 장소명 표시 (GPS 역지오코딩 또는 위치 선택 결과) */
   placeName?: string | null;
+  /** 편집 시 기존 이미지 URI (value가 없을 때 표시) */
+  existingImageUri?: string | null;
 };
 
 export function PhotoPickerField({
@@ -19,11 +20,15 @@ export function PhotoPickerField({
   onChange,
   containerClassName = "",
   placeName = null,
+  existingImageUri = null,
 }: PhotoPickerFieldProps) {
   const handlePick = async () => {
     const result = await pickImage();
     if (result) onChange(result);
   };
+
+  const showPlaceholder = !value && !existingImageUri;
+  const displayUri = value?.uri ?? existingImageUri ?? null;
 
   return (
     <View className={`mb-8 ${containerClassName}`}>
@@ -41,7 +46,7 @@ export function PhotoPickerField({
           </Text>
         </View>
       ) : null}
-      {!value ? (
+      {showPlaceholder ? (
         <Pressable
           className="rounded-card border-2 border-dashed bg-surface-alt items-center justify-center h-40 active:opacity-70"
           style={{ borderColor: "rgba(26, 31, 43, 0.2)" }}
@@ -54,7 +59,7 @@ export function PhotoPickerField({
         <View className="rounded-card overflow-hidden bg-surface-alt">
           <View style={{ width: "100%", height: 200 }}>
             <Image
-              source={{ uri: value.uri }}
+              source={{ uri: displayUri! }}
               style={{ width: "100%", height: "100%" }}
               resizeMode="cover"
             />
