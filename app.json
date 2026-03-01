@@ -4,14 +4,14 @@
     "slug": "triplog",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo_icon.png",
     "scheme": "triplog",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/images/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#f5f2ed"
     },
     "ios": {
       "supportsTablet": true,
@@ -23,7 +23,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/logo_icon_adaptive.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -33,9 +33,7 @@
           "apiKey": "AIzaSyAW_5peWt0hpRoGuN3Hj9RTSTXNdfyk-yg"
         }
       },
-      "permissions": [
-        "android.permission.RECORD_AUDIO"
-      ],
+      "permissions": ["android.permission.RECORD_AUDIO"],
       "package": "com.jungmin0801.triplog"
     },
     "web": {
@@ -43,10 +41,7 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-    "plugins": [
-      "expo-router",
-      "expo-image-picker"
-    ],
+    "plugins": ["expo-router", "expo-image-picker"],
     "experiments": {
       "typedRoutes": true
     },
