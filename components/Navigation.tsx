@@ -1,7 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import type { Href } from "expo-router";
-import { Pressable, View } from "react-native";
+import { Platform, Pressable, View } from "react-native";
 import { Text } from "./Text";
+
+const ANDROID_NAV_BAR_HEIGHT = 56;
 
 export type NavTab = {
   key: string;
@@ -26,6 +28,11 @@ export function Navigation({
   return (
     <View
       className={`flex-row items-center justify-around bg-background/80 border-t border-ink/5 py-2 ${className}`}
+      style={
+        Platform.OS === "android"
+          ? { paddingBottom: ANDROID_NAV_BAR_HEIGHT }
+          : undefined
+      }
     >
       {tabs.map((tab) => {
         const isActive = activeKey === tab.key;

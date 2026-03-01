@@ -70,8 +70,6 @@ export default function MemoryForm() {
     },
   });
 
-  console.log(errors);
-
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const { id: journeyId, memoryId } = useLocalSearchParams<{
     id: string;

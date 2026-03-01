@@ -36,7 +36,6 @@ export default function Login() {
         data.url,
         redirectTo,
       );
-      console.log("브라우저 결과:", result);
       if (result.type === "success" && result.url) {
         // fragment 부분(# 뒤) 파싱
         const hash = result.url.split("#")[1] ?? "";

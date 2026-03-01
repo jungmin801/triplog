@@ -237,7 +237,7 @@ export default function JourneyDetailsRoute() {
             )}
 
             {/* Add Memory button */}
-            <View className="px-space-card pb-8 flex-row justify-between">
+            <View className="px-space-card pb-24 flex-row justify-between">
               <Button
                 variant="primary"
                 size="sm"
