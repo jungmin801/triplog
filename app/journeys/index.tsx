@@ -1,4 +1,6 @@
 import Header from "@/components/Header";
+import { JoinJourneyByCodeModal } from "@/components/JoinJourneyByCodeModal";
+import { JourneyAddOrJoinSheet } from "@/components/JourneyAddOrJoinSheet";
 import { JourneyMenuSheet } from "@/components/JourneyMenuSheet";
 import useCardSize from "@/hooks/useCardSize";
 import useMember from "@/hooks/useMember";
@@ -25,6 +27,8 @@ export default function JourneysHome() {
   const { session } = useAuth();
   const currentUserId = session?.user?.id ?? "";
   const [menuJourneyId, setMenuJourneyId] = useState<string | null>(null);
+  const [showAddOrJoinSheet, setShowAddOrJoinSheet] = useState(false);
+  const [showJoinByCodeModal, setShowJoinByCodeModal] = useState(false);
 
   const { data: journeys = [], isLoading } = useQuery({
     queryKey: journeyQueryKeys.list(),
@@ -62,6 +66,10 @@ export default function JourneysHome() {
   ];
 
   const onTabPress = (href: Href) => {
+    if (href === "/journeys/new") {
+      setShowAddOrJoinSheet(true);
+      return;
+    }
     router.push(href);
   };
 
@@ -165,6 +173,16 @@ export default function JourneysHome() {
 
         <Navigation tabs={tabs} activeKey="journeys" onTabPress={onTabPress} />
 
+        <JourneyAddOrJoinSheet
+          visible={showAddOrJoinSheet}
+          onClose={() => setShowAddOrJoinSheet(false)}
+          onAdd={() => router.push("/journeys/new" as Href)}
+          onJoin={() => setShowJoinByCodeModal(true)}
+        />
+        <JoinJourneyByCodeModal
+          visible={showJoinByCodeModal}
+          onClose={() => setShowJoinByCodeModal(false)}
+        />
         <JourneyMenuSheet
           visible={!!menuJourneyId}
           onClose={() => setMenuJourneyId(null)}

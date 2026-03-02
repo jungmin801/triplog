@@ -1,7 +1,7 @@
 import { Pressable, View, type ViewProps } from "react-native";
 import { Text } from "./Text";
 
-type TagVariant = "primary" | "muted";
+type TagVariant = "primary" | "muted" | "owner";
 
 export type TagProps = ViewProps & {
   variant?: TagVariant;
@@ -12,11 +12,13 @@ export type TagProps = ViewProps & {
 const variantClasses: Record<TagVariant, string> = {
   primary: "bg-primary/10",
   muted: "bg-ink/5",
+  owner: "bg-emerald-500/15",
 };
 
 const variantTextClasses: Record<TagVariant, string> = {
   primary: "text-primary",
   muted: "text-ink/60",
+  owner: "text-emerald-700",
 };
 
 export function Tag({

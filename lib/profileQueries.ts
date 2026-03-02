@@ -20,6 +20,8 @@ export type MyJourneyItem = {
   country_code: string | null;
   thumbnail_url: string | null;
   thumbnail: string | null;
+  /** journey 생성자(owner) user id */
+  created_by: string | null;
 };
 
 export async function fetchProfileStats(
@@ -54,7 +56,7 @@ export async function fetchMyJourneys(userId: string): Promise<MyJourneyItem[]> 
 
   const { data: journeys, error: journeysError } = await supabase
     .from("journeys")
-    .select("id, title, start_date, end_date, country_code, thumbnail_url")
+    .select("id, title, start_date, end_date, country_code, thumbnail_url, created_by")
     .in("id", journeyIds)
     .order("created_at", { ascending: false });
 

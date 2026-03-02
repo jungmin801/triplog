@@ -46,7 +46,9 @@ export type JourneyDetailResult = {
 export async function fetchJourneys(): Promise<Journey[]> {
   const { data, error } = await supabase
     .from("journeys")
-    .select("id, title, start_date, end_date, country_code, thumbnail_url, invite_code, created_by")
+    .select(
+      "id, title, start_date, end_date, country_code, thumbnail_url, invite_code, created_by",
+    )
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -56,7 +58,9 @@ export async function fetchJourneys(): Promise<Journey[]> {
 
   const journeys = (data ?? []) as (Journey & { created_by?: string })[];
   const journeyIds = journeys.map((j) => j.id);
-  const ownerIds = [...new Set((journeys.map((j) => j.created_by).filter(Boolean) as string[]))];
+  const ownerIds = [
+    ...new Set(journeys.map((j) => j.created_by).filter(Boolean) as string[]),
+  ];
   let ownerNameById: Record<string, string> = {};
   if (ownerIds.length > 0) {
     const { data: profiles } = await supabase
@@ -112,25 +116,70 @@ export async function fetchJourneys(): Promise<Journey[]> {
       .from("media")
       .createSignedUrls(paths, 60 * 60);
     if (!signedErr && signedList) {
-      urlByPath = new Map(
-        signedList.map((x) => [x.path, x.signedUrl] as const),
-      );
+      for (const x of signedList) {
+        if (x.path != null && x.signedUrl != null) {
+          urlByPath.set(x.path, x.signedUrl);
+        }
+      }
     }
   }
 
   return journeys.map((j) => ({
     ...j,
-    thumbnail: j.thumbnail_url ? urlByPath.get(j.thumbnail_url) ?? null : null,
+    thumbnail: j.thumbnail_url
+      ? (urlByPath.get(j.thumbnail_url) ?? null)
+      : null,
     member_count: memberCountByJourney[j.id] ?? 0,
     memory_count: memoryCountByJourney[j.id] ?? 0,
-    owner_name: j.created_by ? ownerNameById[j.created_by] ?? "" : "",
+    owner_name: j.created_by ? (ownerNameById[j.created_by] ?? "") : "",
   })) as Journey[];
 }
 
 export async function deleteJourney(journeyId: string): Promise<void> {
-  const { error } = await supabase.from("journeys").delete().eq("id", journeyId);
+  const { error } = await supabase
+    .from("journeys")
+    .delete()
+    .eq("id", journeyId);
   if (error) throw error;
 }
+
+const MAX_JOURNEY_MEMBERS = 8;
+
+/** 초대 코드로 여정 참여. 성공 시 journey_id 반환. 최대 8명 초과 시 에러. */
+export async function joinJourneyByInviteCode(code: string): Promise<string> {
+  const trimmed = (code ?? "").trim().replace(/\D/g, "");
+  if (trimmed.length !== 6) {
+    throw new Error("INVALID_CODE");
+  }
+
+  const { data, error } = await supabase.rpc("join_journey_by_invite", {
+    p_code: trimmed,
+  });
+
+  if (error) {
+    const msg = (error.message ?? "").toLowerCase();
+    if (msg.includes("already") || msg.includes("이미 멤버")) {
+      throw new Error("ALREADY_MEMBER");
+    }
+    if (
+      msg.includes("full") ||
+      msg.includes("참여 불가") ||
+      msg.includes("limit") ||
+      msg.includes("max") ||
+      msg.includes("가득")
+    ) {
+      throw new Error("FULL");
+    }
+    throw new Error("INVALID_CODE");
+  }
+
+  if (typeof data !== "string") {
+    throw new Error("INVALID_CODE");
+  }
+  return data;
+}
+
+export { MAX_JOURNEY_MEMBERS };
 
 export type JourneyForEdit = {
   id: string;
@@ -181,7 +230,9 @@ export async function updateJourney(
       start_date: data.start_date,
       end_date: data.end_date,
       country_code: data.country_code,
-      ...(data.thumbnail_url !== undefined && { thumbnail_url: data.thumbnail_url }),
+      ...(data.thumbnail_url !== undefined && {
+        thumbnail_url: data.thumbnail_url,
+      }),
     })
     .eq("id", journeyId);
   if (error) throw error;
@@ -201,7 +252,9 @@ export async function fetchJourneyDetail(
       .single(),
     supabase
       .from("memories")
-      .select("id, image_url, description, mood, memory_date, created_at, created_by")
+      .select(
+        "id, image_url, description, mood, memory_date, created_at, created_by",
+      )
       .eq("journey_id", journeyId)
       .order("memory_date", { ascending: false })
       .order("created_at", { ascending: false }),
@@ -222,14 +275,12 @@ export async function fetchJourneyDetail(
         .select("full_name")
         .eq("id", createdBy)
         .single();
-      ownerName = (ownerProfile as { full_name?: string } | null)?.full_name ?? "";
+      ownerName =
+        (ownerProfile as { full_name?: string } | null)?.full_name ?? "";
     }
     result.journey = {
       title: journeyData.title ?? "",
-      dateRange: formatDateRange(
-        journeyData.start_date,
-        journeyData.end_date,
-      ),
+      dateRange: formatDateRange(journeyData.start_date, journeyData.end_date),
       created_by: createdBy,
       owner_name: ownerName,
     };
@@ -238,7 +289,13 @@ export async function fetchJourneyDetail(
 
   if (memoriesError || !memoriesData) return result;
 
-  const authorIds = [...new Set((memoriesData.map((m) => (m as { created_by?: string }).created_by).filter(Boolean) as string[]))];
+  const authorIds = [
+    ...new Set(
+      memoriesData
+        .map((m) => (m as { created_by?: string }).created_by)
+        .filter(Boolean) as string[],
+    ),
+  ];
   let authorNameById: Record<string, string> = {};
   if (authorIds.length > 0) {
     const { data: authorProfiles } = await supabase
@@ -283,7 +340,7 @@ export async function fetchJourneyDetail(
         subtitle: subtitle || " ",
         date: displayDate ? formatMemoryDate(displayDate) : "",
         mood: m.mood ?? "",
-        author_name: createdBy ? authorNameById[createdBy] ?? "" : "",
+        author_name: createdBy ? (authorNameById[createdBy] ?? "") : "",
         created_by: createdBy,
       };
     }),

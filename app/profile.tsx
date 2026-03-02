@@ -1,5 +1,7 @@
-import { Avatar, Button, Navigation, NavTab } from "@/components";
+import { Avatar, Button, Navigation, NavTab, Text } from "@/components";
 import Header from "@/components/Header";
+import { JoinJourneyByCodeModal } from "@/components/JoinJourneyByCodeModal";
+import { JourneyAddOrJoinSheet } from "@/components/JourneyAddOrJoinSheet";
 import useMember from "@/hooks/useMember";
 import findCountry from "@/lib/findCountry";
 import {
@@ -10,10 +12,10 @@ import {
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/provider/authProvider";
 import { Ionicons } from "@expo/vector-icons";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type Href, useRouter } from "expo-router";
+import { useState } from "react";
 import { Image, Pressable, ScrollView, View } from "react-native";
-import { Text } from "@/components";
 import { SafeAreaView } from "react-native-safe-area-context";
 import "../global.css";
 
@@ -28,6 +30,7 @@ export default function Profile() {
   const router = useRouter();
   const { session } = useAuth();
   const { member } = useMember();
+  const queryClient = useQueryClient();
   const userId = session?.user?.id ?? "";
 
   const { data: stats } = useQuery({
@@ -58,10 +61,20 @@ export default function Profile() {
     },
   ];
 
-  const onTabPress = (href: Href) => router.push(href);
+  const [showAddOrJoinSheet, setShowAddOrJoinSheet] = useState(false);
+  const [showJoinByCodeModal, setShowJoinByCodeModal] = useState(false);
+
+  const onTabPress = (href: Href) => {
+    if (href === "/journeys/new") {
+      setShowAddOrJoinSheet(true);
+      return;
+    }
+    router.push(href);
+  };
 
   const onLogout = async () => {
     await supabase.auth.signOut();
+    queryClient.invalidateQueries({ queryKey: ["member"] });
     router.push("/login");
   };
 
@@ -129,6 +142,10 @@ export default function Profile() {
                   <Text className="text-body text-ink/50 text-center">
                     참여한 여정이 없어요.
                   </Text>
+                  <Text className="text-body-sm text-ink/40 text-center mt-2">
+                    하단 네비게이션에서 여정을 눌러 새 여정을 만들거나, 코드로
+                    참여해 보세요.
+                  </Text>
                 </View>
               ) : (
                 myJourneys.map((journey) => (
@@ -172,16 +189,23 @@ export default function Profile() {
                           journey.end_date,
                         ) || "—"}
                       </Text>
-                      {journey.country_code ? (
-                        <View className="mt-1.5 self-start">
+                      <View className="flex-row flex-wrap gap-1.5 mt-1.5">
+                        {journey.created_by === userId ? (
+                          <View className="rounded-pill bg-emerald-500/15 px-2 py-0.5">
+                            <Text className="text-small font-semibold text-emerald-700">
+                              Owner
+                            </Text>
+                          </View>
+                        ) : null}
+                        {journey.country_code ? (
                           <View className="rounded-pill bg-primary/10 px-2 py-0.5">
                             <Text className="text-small font-semibold text-primary">
                               {findCountry(journey.country_code)?.name ??
                                 journey.country_code}
                             </Text>
                           </View>
-                        </View>
-                      ) : null}
+                        ) : null}
+                      </View>
                     </View>
                     <Ionicons
                       name="chevron-forward"
@@ -206,6 +230,17 @@ export default function Profile() {
         </ScrollView>
 
         <Navigation tabs={tabs} activeKey="profile" onTabPress={onTabPress} />
+
+        <JourneyAddOrJoinSheet
+          visible={showAddOrJoinSheet}
+          onClose={() => setShowAddOrJoinSheet(false)}
+          onAdd={() => router.push("/journeys/new" as Href)}
+          onJoin={() => setShowJoinByCodeModal(true)}
+        />
+        <JoinJourneyByCodeModal
+          visible={showJoinByCodeModal}
+          onClose={() => setShowJoinByCodeModal(false)}
+        />
       </SafeAreaView>
     </View>
   );
