@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Triplog",
-    "slug": "Triplog",
+    "name": "triplog",
+    "slug": "triplog",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo_icon.png",
